@@ -10,7 +10,6 @@
 src/index.ts                    聚合入口
 src/registry.ts                 唯一 sub server 注册表
 src/static-skills.ts            静态 skills MCP resource 挂载
-src/stateless-gateway.ts         Worker 无状态 Streamable HTTP gateway器
 servers/openspec/server.ts       OpenSpec sub server
 servers/openspec/skills/         OpenSpec skills（生成、Git ignored）
 servers/mattpocock/server.ts     Matt Pocock sub server
@@ -21,7 +20,10 @@ skills.lock.json                 skills 锁文件（自动生成、提交进 Git
 install-skills.js                skills 同步器
 generate-skills-registry.js      静态 registry 生成器
 test/                            smoke 测试
-wrangler.jsonc                   Cloudflare 部署配置
+Dockerfile                      多阶段 Bun 容器构建
+docker-compose.yaml             本地/服务器容器部署
+.github/workflows/              GHCR 自动发布
+wrangler.jsonc                  Cloudflare 部署配置
 ```
 
 ## 常用命令
@@ -30,6 +32,7 @@ wrangler.jsonc                   Cloudflare 部署配置
 bun run init                # 新 clone 初始化：安装依赖、按 lock 同步并生成 registry
 bun dev                     # 构建 skills 后启动本地 server（端口 8787）
 bun run demo                # 构建 skills 后运行 smoke 测试
+docker compose up --build -d # 构建并启动 Docker 服务
 bun run deploy              # 构建 skills 后部署 Cloudflare Worker
 bun run deploy:dry-run      # 构建 skills 后验证 Worker 打包
 bun run skills:sync         # 按 manifest + lock 幂等同步第三方 skills
@@ -47,11 +50,13 @@ bun run skills:update       # 更新远程 commit、同步并重新生成 regist
 - `install-skills.js` 把锁定 commit **copy** 到 `servers/<id>/skills/`，不使用 symlink。
 - `generate-skills-registry.js` 把每个 `SKILL.md` 生成为 `servers/<id>/skills.generated.ts`。
 - sub server 只读取静态 registry，不在运行时访问文件系统；因此 Bun 与 Cloudflare Worker 使用相同 resource 代码路径，Wrangler 能将 skill 正文打进 bundle。
-- 本地 Bun gateway 保留 stateful 多会话；Cloudflare Worker 使用 2025-07-28 无状态 Streamable HTTP，不返回 `Mcp-Session-Id`，避免跨 isolate 出现 `session id not found`。
+- Bun gateway 和 Cloudflare Worker 均使用 `@peri-code/mcpp@0.2` 的严格 `2026-07-28` 无状态 Streamable HTTP，不返回 `Mcp-Session-Id`，避免跨 isolate 出现 `session id not found`。
 - `servers/*/skills/` 和 `servers/*/skills.generated.ts` 都是被 Git 忽略的可复现生成产物。
 
 ## 注意事项
 
+- Docker 镜像在 builder 阶段执行 `skills:build`，runtime 阶段不访问 GitHub；应用通过 `HOST=0.0.0.0` 暴露容器端口。
+- GHCR workflow 仅使用 `GITHUB_TOKEN` 的 `packages: write` 权限，发布 `linux/amd64` 和 `linux/arm64`。
 - 更新第三方 skills：运行 `bun run skills:update`，确认 sub server 和 smoke 测试兼容，再提交 `skills.lock.json`。
 - 同步器检查 skill 目录是否缺失，但目前不校验已有文件内容哈希；不要手工修改生成目录。
 - `git ls-remote <url> <ref>` 是子串匹配，可能误命中 `refs/heads/<user>/main`；同步器已优先精确匹配 `refs/heads/<ref>` / `refs/tags/<ref>`。

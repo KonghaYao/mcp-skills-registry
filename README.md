@@ -15,7 +15,7 @@
 ```
 
 - 每个路径是独立的 MCP endpoint；skills 和 resources 相互隔离。
-- 本地 Bun gateway 使用 stateful 会话；Cloudflare Worker 使用 2025-07-28 无状态 Streamable HTTP，不依赖 isolate 内存 session。
+- 本地 Bun 与 Cloudflare Worker 均使用 `@peri-code/mcpp@0.2` 的严格 `2026-07-28` 无状态 Streamable HTTP，不依赖内存 session。
 - `src/registry.ts` 是本地入口、Cloudflare Worker 和测试共用的唯一路由注册表。
 - stdio 没有 URL/路径概念，不适用该聚合形态。
 
@@ -85,6 +85,45 @@ servers/<id>/skills.generated.ts
 ```
 
 生成目录和生成 registry 都不提交；新 clone 通过 `bun run init` 完整恢复。sub server 不在运行时读取 `node:fs`，因此 Worker bundle 会包含 `SKILL.md` 正文。
+
+## Docker 部署
+
+本地构建并启动：
+
+```sh
+docker compose up --build -d
+docker compose ps
+```
+
+默认监听 `http://127.0.0.1:8787`。可覆盖宿主机端口和镜像：
+
+```sh
+MCP_SKILLS_PORT=8080 \
+MCP_SKILLS_IMAGE=ghcr.io/konghayao/mcp-skills-registry:latest \
+docker compose up -d
+```
+
+Docker builder 按 `skills.lock.json` 下载并生成静态 registry；runtime 镜像直接运行 `bun src/index.ts`，启动时不访问 GitHub。镜像内服务监听 `0.0.0.0:8787`，并带有 `/nope` 404 健康检查。
+
+直接拉取 GHCR 镜像：
+
+```sh
+docker pull ghcr.io/konghayao/mcp-skills-registry:latest
+docker run -d --name mcp-skills-registry \
+  --restart unless-stopped \
+  -p 8787:8787 \
+  ghcr.io/konghayao/mcp-skills-registry:latest
+```
+
+## GHCR 自动发布
+
+`.github/workflows/publish-ghcr.yaml` 在以下场景构建并推送 `linux/amd64`、`linux/arm64` 镜像：
+
+- push 到 `main`：发布 `latest`、`main` 和 `sha-*`；
+- push `v*` tag：发布 tag、semver 和 `sha-*`；
+- GitHub Actions 手动触发。
+
+Workflow 使用仓库自带的 `GITHUB_TOKEN`，需要仓库 Actions 具备 `packages: write` 权限，不需要额外配置 GHCR token。首次发布后可在 GitHub Packages 中调整镜像可见性。
 
 ## Cloudflare 部署
 

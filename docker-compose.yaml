@@ -1,0 +1,12 @@
+services:
+  gateway:
+    image: ${MCP_SKILLS_IMAGE:-ghcr.io/konghayao/mcp-skills-registry:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${MCP_SKILLS_PORT:-8787}:8787"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8787
+    restart: unless-stopped

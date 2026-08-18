@@ -1,0 +1,10 @@
+.git
+.github
+node_modules
+servers/*/skills
+servers/*/skills.generated.ts
+.env
+.DS_Store
+README.md
+CLAUDE.md
+test

@@ -45,8 +45,8 @@ export function createMonorepoGateway(
     options: MonorepoOptions = {},
 ): Promise<GatewayHandle> {
     return createGateway([...MONOREPO_ROUTES], {
-        host: options.host ?? "127.0.0.1",
-        port: options.port ?? 8787,
+        host: options.host ?? process.env.HOST ?? "127.0.0.1",
+        port: options.port ?? Number(process.env.PORT ?? 8787),
     });
 }
 
