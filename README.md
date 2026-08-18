@@ -14,7 +14,8 @@
                     └─────────────────────────────────────────────┘
 ```
 
-- 每个路径是独立的 MCP endpoint；skills、resources 和会话相互隔离。
+- 每个路径是独立的 MCP endpoint；skills 和 resources 相互隔离。
+- 本地 Bun gateway 使用 stateful 会话；Cloudflare Worker 使用 2025-07-28 无状态 Streamable HTTP，不依赖 isolate 内存 session。
 - `src/registry.ts` 是本地入口、Cloudflare Worker 和测试共用的唯一路由注册表。
 - stdio 没有 URL/路径概念，不适用该聚合形态。
 
@@ -92,7 +93,7 @@ bun run deploy:dry-run
 bun run deploy
 ```
 
-会话注册表为 isolate 内存态；生产多实例并发需将会话状态外置到 Durable Objects。
+Worker 使用无状态 Streamable HTTP：响应不返回 `Mcp-Session-Id`，每个请求独立创建 server 与 transport，适合 Cloudflare 多 isolate 路由，无需 Durable Objects。
 
 ## 相关
 

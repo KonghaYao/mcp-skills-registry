@@ -9,7 +9,8 @@
 ```
 src/index.ts                    聚合入口
 src/registry.ts                 唯一 sub server 注册表
-src/static-skills.ts            静态 skills MCP resource 挂载器
+src/static-skills.ts            静态 skills MCP resource 挂载
+src/stateless-gateway.ts         Worker 无状态 Streamable HTTP gateway器
 servers/openspec/server.ts       OpenSpec sub server
 servers/openspec/skills/         OpenSpec skills（生成、Git ignored）
 servers/mattpocock/server.ts     Matt Pocock sub server
@@ -45,7 +46,8 @@ bun run skills:update       # 更新远程 commit、同步并重新生成 regist
 - `skills.lock.json` 记录实际安装 commit 与 skill 名单并提交进 Git；manifest 与 lock 未变且目标文件齐全时同步器直接跳过。
 - `install-skills.js` 把锁定 commit **copy** 到 `servers/<id>/skills/`，不使用 symlink。
 - `generate-skills-registry.js` 把每个 `SKILL.md` 生成为 `servers/<id>/skills.generated.ts`。
-- sub server 只读取静态 registry，不在运行时访问文件系统；因此 Bun 与 Cloudflare Worker 使用相同代码路径，Wrangler 能将 skill 正文打进 bundle。
+- sub server 只读取静态 registry，不在运行时访问文件系统；因此 Bun 与 Cloudflare Worker 使用相同 resource 代码路径，Wrangler 能将 skill 正文打进 bundle。
+- 本地 Bun gateway 保留 stateful 多会话；Cloudflare Worker 使用 2025-07-28 无状态 Streamable HTTP，不返回 `Mcp-Session-Id`，避免跨 isolate 出现 `session id not found`。
 - `servers/*/skills/` 和 `servers/*/skills.generated.ts` 都是被 Git 忽略的可复现生成产物。
 
 ## 注意事项

@@ -8,6 +8,7 @@
     "dev": "bun run skills:build && bun src/index.ts",
     "start": "bun run skills:build && bun src/index.ts",
     "demo": "bun run skills:build && bun test/smoke.ts",
+    "demo:online": "bash test/online-smoke.sh",
     "deploy": "bun run skills:build && bunx wrangler deploy",
     "deploy:dry-run": "bun run skills:build && bunx wrangler deploy --dry-run",
     "skills:sync": "bun install-skills.js",
@@ -24,6 +25,6 @@
   "dependencies": {
     "@modelcontextprotocol/client": "^2.0.0",
     "@modelcontextprotocol/server": "^2.0.0",
-    "@peri-code/mcpp": "^0.1.0"
+    "@peri-code/mcpp": "^0.2.0"
   }
 }
