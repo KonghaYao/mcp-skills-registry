@@ -49,6 +49,48 @@ async function check(
 async function main(): Promise<void> {
     const gateway = await createMonorepoGateway({ host: "127.0.0.1", port: 0 });
     try {
+        const catalogPage = await fetch(gateway.url);
+        if (catalogPage.status !== 200) throw new Error(`/ 应为 200，得到 ${catalogPage.status}`);
+        if (!catalogPage.headers.get("content-type")?.startsWith("text/html")) {
+            throw new Error(`/ 应返回 HTML，得到 ${catalogPage.headers.get("content-type")}`);
+        }
+        const catalogHtml = await catalogPage.text();
+        if (!catalogHtml.includes("MCPP Server Catalog") || !catalogHtml.includes("mcpp/servers/list")) {
+            throw new Error(`/ 未返回 Server Catalog 页面`);
+        }
+
+        const catalogResponse = await fetch(new URL("/catalog/mcp", gateway.url), {
+            method: "POST",
+            headers: {
+                "content-type": "application/json",
+                accept: "application/json, text/event-stream",
+                "MCP-Protocol-Version": "2026-07-28",
+                "Mcp-Method": "mcpp/servers/list",
+            },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: "catalog-smoke",
+                method: "mcpp/servers/list",
+                params: {
+                    _meta: {
+                        "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                        "io.modelcontextprotocol/clientInfo": { name: "smoke", version: "1" },
+                        "io.modelcontextprotocol/clientCapabilities": {
+                            extensions: { "io.mcpp/server-catalog": {} },
+                        },
+                    },
+                },
+            }),
+        });
+        const catalogBody = await catalogResponse.json() as {
+            result?: { servers?: Array<{ id?: string }> };
+        };
+        const catalogIds = new Set(catalogBody.result?.servers?.map(({ id }) => id) ?? []);
+        if (!catalogResponse.ok || !catalogIds.has("openspec") || !catalogIds.has("mattpocock")) {
+            throw new Error(`/catalog/mcp 未列出已挂载的 sub server`);
+        }
+        console.log("✓ /：Catalog HTML 与 /catalog/mcp 可访问");
+
         for (const spec of [
             ["/openspec/mcp", 12, "openspec-explore", "tdd"],
             ["/mattpocock/mcp", 35, "tdd", "openspec-explore"],
@@ -68,6 +110,10 @@ async function main(): Promise<void> {
     }
 
     const routes = createMonorepoRoutes();
+    const workerCatalogPage = await routes.fetch(new Request("http://localhost/"));
+    if (workerCatalogPage.status !== 200 || !workerCatalogPage.headers.get("content-type")?.startsWith("text/html")) {
+        throw new Error("Worker 形态的 / 应返回 Catalog HTML");
+    }
     const fetcher = (input: string | URL, init?: RequestInit) => routes.fetch(
         new Request(typeof input === "string" ? input : input.toString(), init),
     );

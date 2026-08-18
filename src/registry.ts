@@ -10,10 +10,28 @@ export const SERVER_REGISTRY = [
         id: "openspec",
         path: "/openspec/mcp",
         createServer: createOpenspecServer,
+        catalog: {
+            id: "openspec",
+            title: "OpenSpec Skills",
+            description: "OpenSpec workflows for exploring, proposing, applying, and verifying changes.",
+            version: "1.0.0",
+            tags: ["specification", "workflow"],
+            capabilities: ["resources", "skills"],
+            auth: { required: false },
+        },
     },
     {
         id: "mattpocock",
         path: "/mattpocock/mcp",
         createServer: createMattPocockServer,
+        catalog: {
+            id: "mattpocock",
+            title: "Matt Pocock Skills",
+            description: "Engineering and productivity skills curated by Matt Pocock.",
+            version: "1.0.0",
+            tags: ["engineering", "productivity"],
+            capabilities: ["resources", "skills"],
+            auth: { required: false },
+        },
     },
 ] as const;
