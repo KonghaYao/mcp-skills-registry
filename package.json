@@ -1,0 +1,29 @@
+{
+  "name": "monorepo",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "init": "bun install && bun run skills:build",
+    "dev": "bun run skills:build && bun src/index.ts",
+    "start": "bun run skills:build && bun src/index.ts",
+    "demo": "bun run skills:build && bun test/smoke.ts",
+    "deploy": "bun run skills:build && bunx wrangler deploy",
+    "deploy:dry-run": "bun run skills:build && bunx wrangler deploy --dry-run",
+    "skills:sync": "bun install-skills.js",
+    "skills:generate": "bun generate-skills-registry.js",
+    "skills:build": "bun run skills:sync && bun run skills:generate",
+    "skills:update": "bun install-skills.js --update && bun run skills:generate"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "@peri-code/mcpp": "^0.1.0"
+  }
+}

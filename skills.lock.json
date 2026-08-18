@@ -1,0 +1,66 @@
+{
+  "lockfileVersion": 1,
+  "entries": {
+    "openspec": {
+      "ref": "main",
+      "commit": "2826b8889e5223a9a8095d4428b60b56597e1020",
+      "dest": "servers/openspec/skills",
+      "skills": [
+        "openspec-apply-change",
+        "openspec-explore",
+        "openspec-verify-change",
+        "openspec-new-change",
+        "openspec-update-change",
+        "openspec-archive-change",
+        "openspec-onboard",
+        "openspec-propose",
+        "openspec-bulk-archive-change",
+        "openspec-continue-change",
+        "openspec-sync-specs",
+        "openspec-ff-change"
+      ]
+    },
+    "mattpocock": {
+      "ref": "main",
+      "commit": "9c9f36ccd3995266cd675468af71639c8dde1ec5",
+      "dest": "servers/mattpocock/skills",
+      "skills": [
+        "setup-pre-commit",
+        "git-guardrails-claude-code",
+        "scaffold-exercises",
+        "migrate-to-shoehorn",
+        "setup-ts-deep-modules",
+        "loop-me",
+        "writing-fragments",
+        "writing-shape",
+        "claude-handoff",
+        "writing-beats",
+        "research",
+        "domain-modeling",
+        "wayfinder",
+        "setup-matt-pocock-skills",
+        "diagnosing-bugs",
+        "code-review",
+        "to-tickets",
+        "ask-matt",
+        "wizard",
+        "improve-codebase-architecture",
+        "to-spec",
+        "codebase-design",
+        "triage",
+        "prototype",
+        "resolving-merge-conflicts",
+        "grill-with-docs",
+        "implement",
+        "tdd",
+        "writing-for-agents",
+        "wait-what",
+        "handoff",
+        "to-questionnaire",
+        "teach",
+        "grill-me",
+        "grilling"
+      ]
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "sources": [
+    {
+      "id": "openspec",
+      "repo": "Fission-AI/OpenSpec",
+      "ref": "main",
+      "path": "skills",
+      "select": ["*"],
+      "dest": "servers/openspec/skills"
+    },
+    {
+      "id": "mattpocock",
+      "repo": "mattpocock/skills",
+      "ref": "main",
+      "path": "skills",
+      "select": ["*"],
+      "dest": "servers/mattpocock/skills"
+    }
+  ]
+}

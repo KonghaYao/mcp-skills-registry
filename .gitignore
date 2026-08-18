@@ -1,0 +1,5 @@
+node_modules/
+
+# 由 skills.lock.json 可复现生成，不提交第三方内容
+/servers/*/skills/
+/servers/*/skills.generated.ts
