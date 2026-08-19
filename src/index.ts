@@ -15,12 +15,12 @@
  *        bun test/smoke.ts          → 官方 client 连接端点验证
  */
 import {
+    createCatalogPageHandler,
     createGateway,
     createGatewayRoutes,
     type GatewayHandle,
     type GatewayRoutesHandle,
 } from "@peri-code/mcpp";
-import catalogDemo from "./index.html" with { type: "text" };
 import { SERVER_REGISTRY } from "./registry.ts";
 
 /** 挂载表：/xxx/mcp → xxx 子 server（3.7：路径即路由，唯一 HTTP 出口）。 */
@@ -31,26 +31,13 @@ export interface MonorepoOptions {
     port?: number;
 }
 
-function serveCatalogPage(request: Request): Response {
-    const path = new URL(request.url).pathname;
-    if (request.method === "GET" && (path === "/" || path === "/catalog-demo.html")) {
-        return new Response(catalogDemo as unknown as string, {
-            headers: {
-                "content-type": "text/html; charset=utf-8",
-                "cache-control": "no-store",
-            },
-        });
-    }
-    return new Response("MCPP gateway: route not found", { status: 404 });
-}
-
 const GATEWAY_OPTIONS = {
     catalog: {
         path: "/catalog/mcp",
         name: "mcp-skills-registry-catalog",
         version: "1.0.0",
     },
-    fallback: serveCatalogPage,
+    fallback: createCatalogPageHandler(),
 };
 
 /**

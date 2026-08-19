@@ -122,7 +122,7 @@ async function main(): Promise<void> {
         try {
             if (transport.sessionId !== undefined) throw new Error("Worker 0728 不应返回 session id");
             await check(client, "/openspec/mcp", 12, "openspec-explore", "tdd");
-            console.log("✓ Worker 形态：mcpp 0.2 严格 0728 handler 跨请求可用");
+            console.log("✓ Worker 形态：mcpp 0.4 严格 0728 handler 跨请求可用");
         } finally {
             await client.close();
         }
