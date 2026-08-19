@@ -183,7 +183,10 @@ async function main() {
       const skillsRoot = path.join(tmp, relPath);
       const found = await findSkills(skillsRoot);
       if (existsSync(path.join(skillsRoot, "SKILL.md"))) {
-        found.unshift({ dir: skillsRoot, name: path.basename(skillsRoot) });
+        // 根即单 skill（SKILL.md 位于 path 根，例如仓库根就是 skill）：
+        // 用 source id 命名，而非不可控的临时 clone 目录名（fetchTree 用随机 hex 目录）。
+        // 仅当 path 根含 SKILL.md 时命中，不影响按子目录组织的现有源。
+        found.unshift({ dir: skillsRoot, name: id });
       }
       const wanted = found.filter((f) => select.includes("*") || select.includes(f.name));
       if (wanted.length === 0) {

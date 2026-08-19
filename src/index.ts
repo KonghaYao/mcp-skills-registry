@@ -6,6 +6,8 @@
  *   /openspec/mcp      → openspec 子 server（第三方 OpenSpec skills 集）
  *   /mattpocock/mcp    → mattpocock 子 server（工程与生产力 skills 集）
  *   /dnr/mcp           → dnr 子 server（防御性代码安全 skills 集）
+ *   /code-review-expert/mcp → code-review-expert 子 server（代码审查技能）
+ *   /ip-as-logo/mcp    → ip-as-logo 子 server（IP 生成头像 Logo 技能）
  *
  * 形态要点：
  *   - 一个进程、一个端口，是所有子 server 唯一的入口（顶层挂载多个 MCP server）

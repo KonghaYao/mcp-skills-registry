@@ -77,6 +77,22 @@
         "dnr-hunt",
         "customize"
       ]
+    },
+    "code-review-expert": {
+      "ref": "main",
+      "commit": "08b6572ef108f22d4e8a3ecf9182a4bbef097744",
+      "dest": "servers/code-review-expert/skills",
+      "skills": [
+        "code-review-expert"
+      ]
+    },
+    "ip-as-logo": {
+      "ref": "main",
+      "commit": "565d7418e3dbf187a3a50a012963c95d0d64747d",
+      "dest": "servers/ip-as-logo/skills",
+      "skills": [
+        "ip-as-logo"
+      ]
     }
   }
 }

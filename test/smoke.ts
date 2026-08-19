@@ -97,7 +97,7 @@ async function main(): Promise<void> {
             result?: { servers?: Array<{ id?: string }> };
         };
         const catalogIds = new Set(catalogBody.result?.servers?.map(({ id }) => id) ?? []);
-        if (!catalogResponse.ok || !catalogIds.has("openspec") || !catalogIds.has("mattpocock") || !catalogIds.has("dnr")) {
+        if (!catalogResponse.ok || !catalogIds.has("openspec") || !catalogIds.has("mattpocock") || !catalogIds.has("dnr") || !catalogIds.has("code-review-expert") || !catalogIds.has("ip-as-logo")) {
             throw new Error(`/catalog/mcp 未列出已挂载的 sub server`);
         }
         console.log("✓ /：Catalog HTML 与 /catalog/mcp 可访问");
@@ -111,6 +111,14 @@ async function main(): Promise<void> {
             [
                 "/dnr/mcp", 19, "dnr-hunt", "openspec-explore",
                 { skillName: "dnr-hunt", relativePath: "README.md" },
+            ],
+            [
+                "/code-review-expert/mcp", 7, "code-review-expert", "openspec-explore",
+                { skillName: "code-review-expert", relativePath: "agents/agent.yaml" },
+            ],
+            [
+                "/ip-as-logo/mcp", 4, "ip-as-logo", "openspec-explore",
+                { skillName: "ip-as-logo", relativePath: "README.md" },
             ],
         ] as const) {
             const { client, transport } = await connect(new URL(spec[0], gateway.url).href);

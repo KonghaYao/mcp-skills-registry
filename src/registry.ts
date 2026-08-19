@@ -1,6 +1,8 @@
 import { createMattPocockServer } from "../servers/mattpocock/server.ts";
 import { createOpenspecServer } from "../servers/openspec/server.ts";
 import { createDnrServer } from "../servers/dnr/server.ts";
+import { createCodeReviewExpertServer } from "../servers/code-review-expert/server.ts";
+import { createIpAsLogoServer } from "../servers/ip-as-logo/server.ts";
 
 /**
  * 聚合出口的唯一 sub server 注册表。
@@ -45,6 +47,34 @@ export const SERVER_REGISTRY = [
             description: "Defensive code security workflow skills from the defending-code-reference-harness.",
             version: "1.0.0",
             tags: ["security", "vulnerability", "analysis"],
+            capabilities: ["resources", "skills"],
+            auth: { required: false },
+        },
+    },
+    {
+        id: "code-review-expert",
+        path: "/code-review-expert/mcp",
+        createServer: createCodeReviewExpertServer,
+        catalog: {
+            id: "code-review-expert",
+            title: "Code Review Expert",
+            description: "Expert code review of current git changes with a senior engineer lens, from sanyuan0704/sanyuan-skills.",
+            version: "1.0.0",
+            tags: ["code-review", "engineering"],
+            capabilities: ["resources", "skills"],
+            auth: { required: false },
+        },
+    },
+    {
+        id: "ip-as-logo",
+        path: "/ip-as-logo/mcp",
+        createServer: createIpAsLogoServer,
+        catalog: {
+            id: "ip-as-logo",
+            title: "IP as Logo",
+            description: "Generate user avatar logos from IP addresses, from s1dashu/ip-as-logo-skill.",
+            version: "1.0.0",
+            tags: ["design", "logo", "creative"],
             capabilities: ["resources", "skills"],
             auth: { required: false },
         },

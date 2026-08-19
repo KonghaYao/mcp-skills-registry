@@ -23,6 +23,22 @@
       "path": ".claude/skills",
       "select": ["*"],
       "dest": "servers/dnr/skills"
+    },
+    {
+      "id": "code-review-expert",
+      "repo": "sanyuan0704/sanyuan-skills",
+      "ref": "main",
+      "path": "skills",
+      "select": ["code-review-expert"],
+      "dest": "servers/code-review-expert/skills"
+    },
+    {
+      "id": "ip-as-logo",
+      "repo": "s1dashu/ip-as-logo-skill",
+      "ref": "main",
+      "path": ".",
+      "select": ["*"],
+      "dest": "servers/ip-as-logo/skills"
     }
   ]
 }
