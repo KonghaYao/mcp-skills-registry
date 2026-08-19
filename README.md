@@ -84,7 +84,7 @@ servers/<id>/skills.generated.ts
       Bun / Worker bundle
 ```
 
-生成目录和生成 registry 都不提交；新 clone 通过 `bun run init` 完整恢复。sub server 不在运行时读取 `node:fs`，因此 Worker bundle 会包含 `SKILL.md` 正文。
+生成目录和生成 registry 都不提交；新 clone 通过 `bun run init` 完整恢复。sub server 不在运行时读取 `node:fs`，因此 Worker bundle 会包含 `SKILL.md` 正文与全部附件（`skill://<name>/<path>`）。
 
 ## Docker 部署
 

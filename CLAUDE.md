@@ -9,16 +9,15 @@
 ```
 src/index.ts                    聚合入口
 src/registry.ts                 唯一 sub server 注册表
-src/static-skills.ts            静态 skills MCP resource 挂载
 servers/openspec/server.ts       OpenSpec sub server
 servers/openspec/skills/         OpenSpec skills（生成、Git ignored）
 servers/mattpocock/server.ts     Matt Pocock sub server
 servers/mattpocock/skills/       Matt Pocock skills（生成、Git ignored）
-servers/*/skills.generated.ts    Worker 可打包的静态 registry（生成、Git ignored）
+servers/*/skills.generated.ts    Worker 可打包的静态 registry（生成、Git ignored，含 SKILL.md 与全部附件）
 skills.json                      skills 同步声明（手工维护）
 skills.lock.json                 skills 锁文件（自动生成、提交进 Git）
 install-skills.js                skills 同步器
-generate-skills-registry.js      静态 registry 生成器
+generate-skills-registry.js      静态 registry 生成器（用 @peri-code/mcpp 收集 SKILL.md + 附件）
 test/                            smoke 测试
 Dockerfile                      多阶段 Bun 容器构建
 docker-compose.yaml             本地/服务器容器部署

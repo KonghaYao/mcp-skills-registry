@@ -3,11 +3,11 @@
  * （MCPP 3.4 通道 B 投影），经聚合网关在 /openspec/mcp 端点暴露。
  *
  * 来源：Fission-AI/OpenSpec 的 skills 集合。本项目作为第三方 skills 集
- * 直接投放：任何客户端连上该端点即可发现与读取 SKILL.md。
+ * 直接投放：任何客户端连上该端点即可发现与读取 SKILL.md 及全部附件。
  */
 import { McpServer } from "@modelcontextprotocol/server";
-import { registerStaticSkills } from "../../src/static-skills.ts";
-import { skills } from "./skills.generated.ts";
+import { ResourceForStaticSkills } from "@peri-code/mcpp/skills/static";
+import { STATIC_SKILL_RESOURCES } from "./skills.generated.ts";
 
 export function createOpenspecServer(): McpServer {
     const server = new McpServer({
@@ -15,7 +15,7 @@ export function createOpenspecServer(): McpServer {
         version: "1.0.0",
     });
 
-    registerStaticSkills(server, skills);
+    ResourceForStaticSkills(server, { resources: STATIC_SKILL_RESOURCES });
 
     return server;
 }

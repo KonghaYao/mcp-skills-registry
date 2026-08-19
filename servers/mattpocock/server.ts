@@ -3,11 +3,12 @@
  * 挂载为 resources，经聚合网关在 /mattpocock/mcp 端点暴露。
  *
  * 来源：mattpocock/skills。目录由根级 install-skills.js 按 skills.lock.json
- * 可复现生成，不提交第三方内容。
+ * 可复现生成，不提交第三方内容。构建期已用 @peri-code/mcpp 打包全部普通文件
+ * （SKILL.md + references/scripts/agents 等附件），运行时无需本地文件系统。
  */
 import { McpServer } from "@modelcontextprotocol/server";
-import { registerStaticSkills } from "../../src/static-skills.ts";
-import { skills } from "./skills.generated.ts";
+import { ResourceForStaticSkills } from "@peri-code/mcpp/skills/static";
+import { STATIC_SKILL_RESOURCES } from "./skills.generated.ts";
 
 export function createMattPocockServer(): McpServer {
     const server = new McpServer({
@@ -15,7 +16,7 @@ export function createMattPocockServer(): McpServer {
         version: "1.0.0",
     });
 
-    registerStaticSkills(server, skills);
+    ResourceForStaticSkills(server, { resources: STATIC_SKILL_RESOURCES });
 
     return server;
 }

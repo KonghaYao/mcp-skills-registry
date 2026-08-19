@@ -33,17 +33,28 @@ async function check(
     expectedCount: number,
     required: string,
     forbidden: string,
+    attachment?: { skillName: string; relativePath: string },
 ): Promise<void> {
     const listed = await client.listResources();
     const skills = listed.resources?.filter(({ uri }) => uri.startsWith("skill://")) ?? [];
     const requiredUri = `skill://${required}/SKILL.md`;
     const forbiddenUri = `skill://${forbidden}/SKILL.md`;
-    if (skills.length !== expectedCount) throw new Error(`${path} 期望 ${expectedCount} skills，得到 ${skills.length}`);
+    if (skills.length !== expectedCount) throw new Error(`${path} 期望 ${expectedCount} resources，得到 ${skills.length}`);
     if (!skills.some(({ uri }) => uri === requiredUri)) throw new Error(`${path} 缺少 ${requiredUri}`);
     if (skills.some(({ uri }) => uri === forbiddenUri)) throw new Error(`${path} 混入 ${forbiddenUri}`);
     const read = await client.readResource({ uri: requiredUri });
     if (!(read.contents[0] as { text?: string } | undefined)?.text) throw new Error(`${requiredUri} 内容为空`);
-    console.log(`✓ ${path}: 0728，${skills.length} skills，${required} 可读`);
+
+    if (attachment) {
+        const attachmentUri = `skill://${attachment.skillName}/${attachment.relativePath}`;
+        if (!skills.some(({ uri }) => uri === attachmentUri)) throw new Error(`${path} 缺少附件 ${attachmentUri}`);
+        const attachmentRead = await client.readResource({ uri: attachmentUri });
+        const content = attachmentRead.contents[0] as { text?: string } | undefined;
+        if (!content?.text) throw new Error(`${attachmentUri} 内容为空`);
+        console.log(`✓ ${path}: 0728，${skills.length} resources，${required} 与附件 ${attachment.relativePath} 可读`);
+        return;
+    }
+    console.log(`✓ ${path}: 0728，${skills.length} resources，${required} 可读`);
 }
 
 async function main(): Promise<void> {
@@ -92,13 +103,16 @@ async function main(): Promise<void> {
         console.log("✓ /：Catalog HTML 与 /catalog/mcp 可访问");
 
         for (const spec of [
-            ["/openspec/mcp", 12, "openspec-explore", "tdd"],
-            ["/mattpocock/mcp", 35, "tdd", "openspec-explore"],
+            ["/openspec/mcp", 12, "openspec-explore", "tdd", undefined],
+            [
+                "/mattpocock/mcp", 96, "tdd", "openspec-explore",
+                { skillName: "diagnosing-bugs", relativePath: "agents/openai.yaml" },
+            ],
         ] as const) {
             const { client, transport } = await connect(new URL(spec[0], gateway.url).href);
             try {
                 if (transport.sessionId !== undefined) throw new Error("0728 不应返回 session id");
-                await check(client, spec[0], spec[1], spec[2], spec[3]);
+                await check(client, spec[0], spec[1], spec[2], spec[3], spec[4]);
             } finally {
                 await client.close();
             }
