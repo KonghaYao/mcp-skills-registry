@@ -97,7 +97,7 @@ async function main(): Promise<void> {
             result?: { servers?: Array<{ id?: string }> };
         };
         const catalogIds = new Set(catalogBody.result?.servers?.map(({ id }) => id) ?? []);
-        if (!catalogResponse.ok || !catalogIds.has("openspec") || !catalogIds.has("mattpocock")) {
+        if (!catalogResponse.ok || !catalogIds.has("openspec") || !catalogIds.has("mattpocock") || !catalogIds.has("dnr")) {
             throw new Error(`/catalog/mcp 未列出已挂载的 sub server`);
         }
         console.log("✓ /：Catalog HTML 与 /catalog/mcp 可访问");
@@ -107,6 +107,10 @@ async function main(): Promise<void> {
             [
                 "/mattpocock/mcp", 96, "tdd", "openspec-explore",
                 { skillName: "diagnosing-bugs", relativePath: "agents/openai.yaml" },
+            ],
+            [
+                "/dnr/mcp", 19, "dnr-hunt", "openspec-explore",
+                { skillName: "dnr-hunt", relativePath: "README.md" },
             ],
         ] as const) {
             const { client, transport } = await connect(new URL(spec[0], gateway.url).href);

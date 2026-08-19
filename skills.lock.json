@@ -61,6 +61,22 @@
         "grill-me",
         "grilling"
       ]
+    },
+    "dnr": {
+      "ref": "main",
+      "commit": "d3bea6b5793b5f3d59a75ebe69a58efa88383145",
+      "dest": "servers/dnr/skills",
+      "skills": [
+        "threat-model",
+        "dnr-respond",
+        "verify",
+        "vuln-scan",
+        "triage",
+        "quickstart",
+        "patch",
+        "dnr-hunt",
+        "customize"
+      ]
     }
   }
 }

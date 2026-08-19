@@ -1,5 +1,6 @@
 import { createMattPocockServer } from "../servers/mattpocock/server.ts";
 import { createOpenspecServer } from "../servers/openspec/server.ts";
+import { createDnrServer } from "../servers/dnr/server.ts";
 
 /**
  * 聚合出口的唯一 sub server 注册表。
@@ -30,6 +31,20 @@ export const SERVER_REGISTRY = [
             description: "Engineering and productivity skills curated by Matt Pocock.",
             version: "1.0.0",
             tags: ["engineering", "productivity"],
+            capabilities: ["resources", "skills"],
+            auth: { required: false },
+        },
+    },
+    {
+        id: "dnr",
+        path: "/dnr/mcp",
+        createServer: createDnrServer,
+        catalog: {
+            id: "dnr",
+            title: "DNR Security Skills",
+            description: "Defensive code security workflow skills from the defending-code-reference-harness.",
+            version: "1.0.0",
+            tags: ["security", "vulnerability", "analysis"],
             capabilities: ["resources", "skills"],
             auth: { required: false },
         },

@@ -15,6 +15,14 @@
       "path": "skills",
       "select": ["*"],
       "dest": "servers/mattpocock/skills"
+    },
+    {
+      "id": "dnr",
+      "repo": "anthropics/defending-code-reference-harness",
+      "ref": "main",
+      "path": ".claude/skills",
+      "select": ["*"],
+      "dest": "servers/dnr/skills"
     }
   ]
 }
