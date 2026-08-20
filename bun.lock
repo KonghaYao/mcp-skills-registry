@@ -7,7 +7,7 @@
       "dependencies": {
         "@modelcontextprotocol/client": "^2.0.0",
         "@modelcontextprotocol/server": "^2.0.0",
-        "@peri-code/mcpp": "^0.5.0",
+        "@peri-code/mcpp": "^0.6.5",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -24,7 +24,7 @@
 
     "@modelcontextprotocol/server": ["@modelcontextprotocol/server@2.0.0", "", { "dependencies": { "@modelcontextprotocol/core": "2.0.0", "zod": "^4.2.0" } }, "sha512-YhHWdHfpFMQfd0prsEnxKeS3Qz3ytIGmsS0sth4KDjnacIT7hxk6hXHkJ9KysxlkvTM+WZAtQbbcUhdoP4Hvtw=="],
 
-    "@peri-code/mcpp": ["@peri-code/mcpp@0.5.0", "", { "dependencies": { "@modelcontextprotocol/server": "^2.0.0", "yaml": "^2.6.1", "zod": "^4.4.3" }, "peerDependencies": { "typescript": "^7" } }, "sha512-XjpovOKeeKQ3HRksnBUIedQpNCZ9iuiFXGOQrwNKoxAyBAgk2zQWsgpJtuF21mOr6Tt9/v4IKRd2GgFXJRjgiQ=="],
+    "@peri-code/mcpp": ["@peri-code/mcpp@0.6.5", "", { "dependencies": { "@modelcontextprotocol/server": "^2.0.0", "yaml": "^2.6.1", "zod": "^4.4.3" }, "peerDependencies": { "typescript": "^7" } }, "sha512-/G0gB5fQnxJTbbaO+yFPCX5ksyMUnne1bBIFKwVTIYY6JwbJWUA8qBOBN4v66V/TCoHK1Zb80kUmpnYCaMvvFA=="],
 
     "@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
 

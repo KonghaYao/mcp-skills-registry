@@ -8,6 +8,7 @@
  */
 import { McpServer } from "@modelcontextprotocol/server";
 import { ResourceForStaticSkills } from "@peri-code/mcpp/skills/static";
+import { skillResourceCache } from "../../src/skill-resource-cache.ts";
 import { STATIC_SKILL_RESOURCES } from "./skills.generated.ts";
 
 export function createMattPocockServer(): McpServer {
@@ -16,7 +17,13 @@ export function createMattPocockServer(): McpServer {
         version: "1.0.0",
     });
 
-    ResourceForStaticSkills(server, { resources: STATIC_SKILL_RESOURCES });
+    ResourceForStaticSkills(server, {
+        resources: STATIC_SKILL_RESOURCES,
+        cache: skillResourceCache,
+        origin: "mattpocock-skills",
+        cacheScope: "public",
+        ttlMs: 30_000,
+    });
 
     return server;
 }
