@@ -6,24 +6,12 @@
  * 本项目作为第三方 skills 集直接投放：任何客户端连上该端点即可发现与读取
  * SKILL.md 及全部附件（assets/）。
  */
-import { McpServer } from "@modelcontextprotocol/server";
-import { ResourceForStaticSkills } from "@peri-code/mcpp/skills/static";
-import { skillResourceCache } from "../../src/skill-resource-cache.ts";
-import { STATIC_SKILL_RESOURCES } from "./skills.generated.ts";
+import { createStaticSkillsServerFactory } from "../../src/create-static-skills-server.ts";
+import { SKILLS_CACHE_VERSION, STATIC_SKILL_RESOURCES } from "./skills.generated.ts";
 
-export function createIpAsLogoServer(): McpServer {
-    const server = new McpServer({
-        name: "ip-as-logo",
-        version: "1.0.0",
-    });
-
-    ResourceForStaticSkills(server, {
-        resources: STATIC_SKILL_RESOURCES,
-        cache: skillResourceCache,
-        origin: "ip-as-logo",
-        cacheScope: "public",
-        ttlMs: 30_000,
-    });
-
-    return server;
-}
+export const createIpAsLogoServer = createStaticSkillsServerFactory({
+    name: "ip-as-logo",
+    version: "1.0.0",
+    resources: STATIC_SKILL_RESOURCES,
+    cacheVersion: SKILLS_CACHE_VERSION,
+});

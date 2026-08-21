@@ -7,24 +7,12 @@
  * SKILL.md 及附件。注意：这些 skill 在执行时依赖仓库中的 _lib/harness 等
  * 外部文件，本同步仅携带 skill 目录本身，故更适合作为方法论文档消费。
  */
-import { McpServer } from "@modelcontextprotocol/server";
-import { ResourceForStaticSkills } from "@peri-code/mcpp/skills/static";
-import { skillResourceCache } from "../../src/skill-resource-cache.ts";
-import { STATIC_SKILL_RESOURCES } from "./skills.generated.ts";
+import { createStaticSkillsServerFactory } from "../../src/create-static-skills-server.ts";
+import { SKILLS_CACHE_VERSION, STATIC_SKILL_RESOURCES } from "./skills.generated.ts";
 
-export function createDnrServer(): McpServer {
-    const server = new McpServer({
-        name: "dnr",
-        version: "1.0.0",
-    });
-
-    ResourceForStaticSkills(server, {
-        resources: STATIC_SKILL_RESOURCES,
-        cache: skillResourceCache,
-        origin: "dnr",
-        cacheScope: "public",
-        ttlMs: 30_000,
-    });
-
-    return server;
-}
+export const createDnrServer = createStaticSkillsServerFactory({
+    name: "dnr",
+    version: "1.0.0",
+    resources: STATIC_SKILL_RESOURCES,
+    cacheVersion: SKILLS_CACHE_VERSION,
+});

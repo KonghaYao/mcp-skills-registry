@@ -3,6 +3,19 @@
  */
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { createMonorepoGateway, createMonorepoRoutes } from "../src/index.ts";
+import { skillResourceCache } from "../src/skill-resource-cache.ts";
+
+const CACHE_VERSION_EXTENSION = "io.mcpp/server-cache-version";
+
+function checkCacheVersionCapability(client: Client, path: string): void {
+    const capabilities = (client as Client & {
+        getServerCapabilities(): { extensions?: Record<string, { cacheVersion?: string }> } | undefined;
+    }).getServerCapabilities();
+    const cacheVersion = capabilities?.extensions?.[CACHE_VERSION_EXTENSION]?.cacheVersion;
+    if (typeof cacheVersion !== "string" || !cacheVersion.startsWith("sha256:")) {
+        throw new Error(`${path} 未协商有效的 Server Cache Version`);
+    }
+}
 
 function createClient(name: string): Client {
     return new Client(
@@ -124,7 +137,15 @@ async function main(): Promise<void> {
             const { client, transport } = await connect(new URL(spec[0], gateway.url).href);
             try {
                 if (transport.sessionId !== undefined) throw new Error("0728 不应返回 session id");
+                checkCacheVersionCapability(client, spec[0]);
+                const cacheSizeBefore = skillResourceCache.size;
                 await check(client, spec[0], spec[1], spec[2], spec[3], spec[4]);
+                const cacheSizeAfterFirstRead = skillResourceCache.size;
+                await client.listResources();
+                await client.readResource({ uri: `skill://${spec[2]}/SKILL.md` });
+                if (cacheSizeAfterFirstRead <= cacheSizeBefore || skillResourceCache.size !== cacheSizeAfterFirstRead) {
+                    throw new Error(`${spec[0]} 未复用版本化 Response / Resource Content Cache`);
+                }
             } finally {
                 await client.close();
             }
@@ -147,8 +168,9 @@ async function main(): Promise<void> {
         const { client, transport } = await connect("http://localhost/openspec/mcp", fetcher);
         try {
             if (transport.sessionId !== undefined) throw new Error("Worker 0728 不应返回 session id");
+            checkCacheVersionCapability(client, "/openspec/mcp");
             await check(client, "/openspec/mcp", 12, "openspec-explore", "tdd");
-            console.log("✓ Worker 形态：mcpp 0.4 严格 0728 handler 跨请求可用");
+            console.log("✓ Worker 形态：mcpp 0.7 严格 0728 handler 与版本化 cache 跨请求可用");
         } finally {
             await client.close();
         }

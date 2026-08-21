@@ -10,6 +10,7 @@
 import path from "node:path";
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
+import { createCacheVersion } from "@peri-code/mcpp";
 import { buildStaticSkillResources, renderStaticSkillResourcesModule } from "@peri-code/mcpp/skills/build";
 
 const ROOT = import.meta.dir;
@@ -41,10 +42,14 @@ async function main() {
     }
 
     const outputPath = path.join(ROOT, "servers", id, "skills.generated.ts");
-    const content = renderStaticSkillResourcesModule(resources, "STATIC_SKILL_RESOURCES").replace(
+    const cacheVersion = await createCacheVersion({
+      schemaVersion: "1",
+      resources: JSON.parse(JSON.stringify(resources)),
+    });
+    const content = `${renderStaticSkillResourcesModule(resources, "STATIC_SKILL_RESOURCES").replace(
       "import type { StaticSkillResourceFile } from \"@peri-code/mcpp/skills/static\";",
       "// 此文件由 generate-skills-registry.js 生成，勿手工编辑。\nimport type { StaticSkillResourceFile } from \"@peri-code/mcpp/skills/static\";",
-    );
+    )}\nexport const SKILLS_CACHE_VERSION = ${JSON.stringify(cacheVersion)};\n`;
     await writeFile(outputPath, content);
     const attachmentCount = resources.filter((resource) => resource.relativePath !== "SKILL.md").length;
     console.log(
