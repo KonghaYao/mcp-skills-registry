@@ -2,8 +2,13 @@
  * 严格 MCP 2026-07-28 聚合出口 smoke 测试。
  */
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
+import { createGateway } from "@peri-code/mcpp";
 import { createMonorepoGateway, createMonorepoRoutes } from "../src/index.ts";
 import { skillResourceCache } from "../src/skill-resource-cache.ts";
+import {
+    createImageRecognitionServer,
+} from "../servers/image-recognition/server.ts";
+import { MockVisionProvider } from "../servers/image-recognition/vision-provider.ts";
 
 const CACHE_VERSION_EXTENSION = "io.mcpp/server-cache-version";
 
@@ -70,6 +75,12 @@ async function check(
     console.log(`✓ ${path}: 0728，${skills.length} resources，${required} 可读`);
 }
 
+/** 1×1 透明 PNG（image-recognition 测试图片）。 */
+const PIXEL_PNG = Uint8Array.from(
+    atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="),
+    (char) => char.charCodeAt(0),
+);
+
 async function main(): Promise<void> {
     const gateway = await createMonorepoGateway({ host: "127.0.0.1", port: 0 });
     try {
@@ -110,7 +121,7 @@ async function main(): Promise<void> {
             result?: { servers?: Array<{ id?: string }> };
         };
         const catalogIds = new Set(catalogBody.result?.servers?.map(({ id }) => id) ?? []);
-        if (!catalogResponse.ok || !catalogIds.has("openspec") || !catalogIds.has("mattpocock") || !catalogIds.has("dnr") || !catalogIds.has("code-review-expert") || !catalogIds.has("ip-as-logo")) {
+        if (!catalogResponse.ok || !catalogIds.has("openspec") || !catalogIds.has("mattpocock") || !catalogIds.has("dnr") || !catalogIds.has("code-review-expert") || !catalogIds.has("ip-as-logo") || !catalogIds.has("image-recognition")) {
             throw new Error(`/catalog/mcp 未列出已挂载的 sub server`);
         }
         console.log("✓ /：Catalog HTML 与 /catalog/mcp 可访问");
@@ -150,12 +161,111 @@ async function main(): Promise<void> {
                 await client.close();
             }
         }
+        // ---- image-recognition：动态 tool server（协议与校验语义） ----
+        {
+            const { client, transport } = await connect(new URL("/image-recognition/mcp", gateway.url).href);
+            try {
+                if (transport.sessionId !== undefined) throw new Error("0728 不应返回 session id");
+                const tools = await client.listTools();
+                const analyze = tools.tools?.find((tool) => tool.name === "analyze_image");
+                const properties = (analyze?.inputSchema as { properties?: Record<string, unknown> } | undefined)?.properties ?? {};
+                for (const key of ["url", "mode", "prompt"]) {
+                    if (!(key in properties)) throw new Error(`analyze_image 缺少参数 ${key}`);
+                }
+                console.log("✓ /image-recognition/mcp: 0728，analyze_image 工具可见（url/mode/prompt）");
+
+                const rejected = await client.callTool({
+                    name: "analyze_image",
+                    arguments: { url: "file:///etc/passwd" },
+                });
+                if (!rejected.isError || !JSON.stringify(rejected.content).includes("拒绝访问")) {
+                    throw new Error("file:// URL 应被 scheme 校验拒绝");
+                }
+                console.log("✓ /image-recognition/mcp: 非 http(s) URL 按 isError 语义拒绝");
+            } finally {
+                await client.close();
+            }
+        }
+
         const missing = await fetch(new URL("/nope", gateway.url), { method: "POST" });
         if (missing.status !== 404) throw new Error(`/nope 应为 404，得到 ${missing.status}`);
     } finally {
         await gateway.stop();
     }
 
+    // ---- image-recognition：Mock 后端成功路径（图片拉取 → provider → 文本） ----
+    const imageServer = Bun.serve({
+        port: 0,
+        fetch: (request) => {
+            const url = new URL(request.url);
+            if (url.pathname === "/pixel.png") {
+                return new Response(PIXEL_PNG, { headers: { "content-type": "image/png" } });
+            }
+            if (url.pathname === "/plain.txt") {
+                return new Response("hello", { headers: { "content-type": "text/plain" } });
+            }
+            return new Response("not found", { status: 404 });
+        },
+    });
+    const mockGateway = await createGateway(
+        [
+            {
+                path: "/image-recognition/mcp",
+                createServer: createImageRecognitionServer({
+                    provider: new MockVisionProvider(),
+                    allowPrivateNetworks: true,
+                }),
+            },
+        ],
+        { host: "127.0.0.1", port: 0 },
+    );
+    try {
+        const { client, transport } = await connect(new URL("/image-recognition/mcp", mockGateway.url).href);
+        try {
+            if (transport.sessionId !== undefined) throw new Error("0728 不应返回 session id");
+            const call = async (args: Record<string, unknown>) => {
+                const result = await client.callTool({ name: "analyze_image", arguments: args });
+                const text = (result.content[0] as { text?: string } | undefined)?.text ?? JSON.stringify(result.content);
+                return { result, text };
+            };
+            const base = `http://127.0.0.1:${imageServer.port}`;
+
+            const describe = await call({ url: `${base}/pixel.png` });
+            if (describe.result.isError || !describe.text.includes("[mock:describe] mime=image/png")) {
+                throw new Error(`describe 默认模式应成功并命中 Mock，得到：${describe.text}`);
+            }
+            const structured = describe.result.structuredContent as { text?: string } | undefined;
+            if (!structured || structured.text !== describe.text) {
+                throw new Error("describe 应返回 structuredContent.text 自由文本镜像");
+            }
+            const ocr = await call({ url: `${base}/pixel.png`, mode: "ocr" });
+            if (ocr.result.isError || !ocr.text.includes("[mock:ocr]")) {
+                throw new Error(`ocr 模式应成功，得到：${ocr.text}`);
+            }
+            const screenshot = await call({ url: `${base}/pixel.png`, mode: "screenshot", prompt: "页面布局" });
+            if (
+                screenshot.result.isError ||
+                !screenshot.text.includes("[mock:screenshot]") ||
+                !screenshot.text.includes("prompt=页面布局")
+            ) {
+                throw new Error(`screenshot 模式与 prompt 透传应成功，得到：${screenshot.text}`);
+            }
+            const badType = await call({ url: `${base}/plain.txt` });
+            if (!badType.result.isError || !badType.text.includes("不支持的图片类型")) {
+                throw new Error(`text/plain 应被类型白名单拒绝，得到：${badType.text}`);
+            }
+            const notFound = await call({ url: `${base}/nope.png` });
+            if (!notFound.result.isError || !notFound.text.includes("HTTP 404")) {
+                throw new Error(`404 应报图片拉取失败，得到：${notFound.text}`);
+            }
+            console.log("✓ /image-recognition/mcp: Mock 后端成功路径、类型白名单、HTTP 错误语义正确");
+        } finally {
+            await client.close();
+        }
+    } finally {
+        await mockGateway.stop();
+        imageServer.stop();
+    }
     const routes = createMonorepoRoutes();
     const workerCatalogPage = await routes.fetch(new Request("http://localhost/"));
     if (workerCatalogPage.status !== 200 || !workerCatalogPage.headers.get("content-type")?.startsWith("text/html")) {

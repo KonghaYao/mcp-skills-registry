@@ -8,6 +8,10 @@
     "mattpocock": {
       "type": "streamable-http",
       "url": "http://127.0.0.1:8787/mattpocock/mcp"
+    },
+    "image-recognition": {
+      "type": "streamable-http",
+      "url": "http://127.0.0.1:8787/image-recognition/mcp"
     }
   }
 }

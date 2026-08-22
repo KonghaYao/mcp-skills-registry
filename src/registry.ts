@@ -3,6 +3,7 @@ import { createOpenspecServer } from "../servers/openspec/server.ts";
 import { createDnrServer } from "../servers/dnr/server.ts";
 import { createCodeReviewExpertServer } from "../servers/code-review-expert/server.ts";
 import { createIpAsLogoServer } from "../servers/ip-as-logo/server.ts";
+import { imageRecognitionServer } from "../servers/image-recognition/server.ts";
 
 /**
  * 聚合出口的唯一 sub server 注册表。
@@ -76,6 +77,20 @@ export const SERVER_REGISTRY = [
             version: "1.0.0",
             tags: ["design", "logo", "creative"],
             capabilities: ["resources", "skills"],
+            auth: { required: false },
+        },
+    },
+    {
+        id: "image-recognition",
+        path: "/image-recognition/mcp",
+        createServer: imageRecognitionServer,
+        catalog: {
+            id: "image-recognition",
+            title: "Image Recognition",
+            description: "Vision analysis of images by URL: describe, OCR, and UI screenshot analysis.",
+            version: "1.0.0",
+            tags: ["vision", "image", "ocr"],
+            capabilities: ["tools"],
             auth: { required: false },
         },
     },

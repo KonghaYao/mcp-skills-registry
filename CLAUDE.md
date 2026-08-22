@@ -13,6 +13,10 @@ servers/openspec/server.ts       OpenSpec sub server
 servers/openspec/skills/         OpenSpec skills（生成、Git ignored）
 servers/mattpocock/server.ts     Matt Pocock sub server
 servers/mattpocock/skills/       Matt Pocock skills（生成、Git ignored）
+servers/ip-as-logo/server.ts       IP as Logo sub server
+servers/image-recognition/         图片识别 sub server（动态 tool，非 skills 投放）
+servers/image-recognition/vision-provider.ts   视觉后端抽象（VisionProvider 接口 + 模式契约）
+servers/image-recognition/providers/openai-compatible.ts  OpenAI 兼容后端（环境变量驱动）
 servers/*/skills.generated.ts    Worker 可打包的静态 registry（生成、Git ignored，含 SKILL.md 与全部附件）
 skills.json                      skills 同步声明（手工维护）
 skills.lock.json                 skills 锁文件（自动生成、提交进 Git）
@@ -52,6 +56,30 @@ bun run skills:update       # 更新远程 commit、同步并重新生成 regist
 - Bun gateway 和 Cloudflare Worker 均使用 `@peri-code/mcpp@0.2` 的严格 `2026-07-28` 无状态 Streamable HTTP，不返回 `Mcp-Session-Id`，避免跨 isolate 出现 `session id not found`。
 - `servers/*/skills/` 和 `servers/*/skills.generated.ts` 都是被 Git 忽略的可复现生成产物。
 
+## image-recognition 子 server（动态 tool）
+
+本项目第一个**动态 tool server**（其余 sub server 均为静态 skills 投放）：协议层只做承接与校验，视觉计算全部委托给 `VisionProvider`，服务端零计算。
+
+- 工具：`analyze_image(url, mode, prompt?)`，经聚合网关在 `/image-recognition/mcp` 暴露。
+- 模式契约（三个模式共用同一工具，`mode` 枚举）：
+  - `describe`（默认）：英文 prompt 透传，自由文本描述/问答。
+  - `ocr`：纯文本逐字提取（不关心位置）。
+  - `screenshot`：综合分析（布局结构 + 页面元素 + 交互/可用性建议）。
+  - prompt 统一使用英文；输出以自由文本为主，工具声明 `outputSchema`，`structuredContent.text` 为文本镜像，`structured` 为后端可选补充（如 ocr 的 confidence）。
+- 服务端校验：URL 仅 http(s)（本地形态防 SSRF，`allowPrivateNetworks` 可关闭）、图片 MIME 白名单（jpeg/png/webp/gif）、体积 ≤10MiB、图片拉取超时 15s；错误统一按 `isError: true` 返回，模型可自纠。
+- 动态内容不启用 MCPP Response Cache（`ttlMs: 0`）。
+- 后端接入：`server.ts` 默认调用 `createDefaultVisionProvider()`，从执行环境变量构造：
+
+| 环境变量 | 默认 | 说明 |
+|---|---|---|
+| `VISION_API_KEY` | 无（缺省回退 Unconfigured） | OpenAI 兼容 API key，仅经环境变量注入，绝不入库 |
+| `VISION_API_BASE_URL` | `https://api.openai.com/v1` | OpenAI 兼容端点基址（实测 `https://cc.zhixiaapi.xyz/v1` + `VISION_MODEL=grok-4.6`） |
+| `VISION_MODEL` | `gpt-4o-mini` | 视觉模型名 |
+| `VISION_API_TIMEOUT_MS` | `120000` | 模型推理可达 20-50s，勿调太小 |
+
+- 传输协议：OpenAI 图片协议——`POST {base}/chat/completions`，图片以 base64 data URI 经 `image_url` 传入，system prompt 按模式（英文，见 `openai-compatible.ts`）。
+- 测试：smoke 用 `MockVisionProvider`（离线可跑）+ `allowPrivateNetworks` 本地图片；真实后端需在部署环境配置环境变量。
+
 ## 注意事项
 
 - Docker 镜像在 builder 阶段执行 `skills:build`，runtime 阶段不访问 GitHub；应用通过 `HOST=0.0.0.0` 暴露容器端口。
@@ -60,7 +88,8 @@ bun run skills:update       # 更新远程 commit、同步并重新生成 regist
 - 同步器检查 skill 目录是否缺失，但目前不校验已有文件内容哈希；不要手工修改生成目录。
 - `git ls-remote <url> <ref>` 是子串匹配，可能误命中 `refs/heads/<user>/main`；同步器已优先精确匹配 `refs/heads/<ref>` / `refs/tags/<ref>`。
 - 不使用 `npx skills`：它缺少本项目需要的 commit lock 和自定义 `dest`。
-- 新增 sub server 时，同时添加 `skills.json` source、`servers/<id>/server.ts`、`src/registry.ts` 路由和 smoke 覆盖。
+- image-recognition 的 API key 等敏感配置只走环境变量 / Worker secrets，不写入任何源码、测试或文档示例。
+- 新增 sub server 时，同时添加 `skills.json` source、`servers/<id>/server.ts`、`src/registry.ts` 路由和 smoke 覆盖；动态 tool server 还需注入/默认构造 `VisionProvider`。
 
 ## 约定
 
