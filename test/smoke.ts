@@ -9,6 +9,8 @@ import {
     createImageRecognitionServer,
 } from "../servers/image-recognition/server.ts";
 import { MockVisionProvider } from "../servers/image-recognition/vision-provider.ts";
+import { createWebServer } from "../servers/web/server.ts";
+import { MockWebProvider } from "../servers/web/web-provider.ts";
 
 const CACHE_VERSION_EXTENSION = "io.mcpp/server-cache-version";
 
@@ -121,7 +123,7 @@ async function main(): Promise<void> {
             result?: { servers?: Array<{ id?: string }> };
         };
         const catalogIds = new Set(catalogBody.result?.servers?.map(({ id }) => id) ?? []);
-        if (!catalogResponse.ok || !catalogIds.has("openspec") || !catalogIds.has("mattpocock") || !catalogIds.has("dnr") || !catalogIds.has("code-review-expert") || !catalogIds.has("ip-as-logo") || !catalogIds.has("image-recognition")) {
+        if (!catalogResponse.ok || !catalogIds.has("openspec") || !catalogIds.has("mattpocock") || !catalogIds.has("dnr") || !catalogIds.has("code-review-expert") || !catalogIds.has("ip-as-logo") || !catalogIds.has("image-recognition") || !catalogIds.has("deep-research") || !catalogIds.has("web")) {
             throw new Error(`/catalog/mcp 未列出已挂载的 sub server`);
         }
         console.log("✓ /：Catalog HTML 与 /catalog/mcp 可访问");
@@ -143,6 +145,10 @@ async function main(): Promise<void> {
             [
                 "/ip-as-logo/mcp", 4, "ip-as-logo", "openspec-explore",
                 { skillName: "ip-as-logo", relativePath: "README.md" },
+            ],
+            [
+                "/deep-research/mcp", 6, "research", "openspec-explore",
+                { skillName: "research", relativePath: "validate_json.py" },
             ],
         ] as const) {
             const { client, transport } = await connect(new URL(spec[0], gateway.url).href);
@@ -182,6 +188,30 @@ async function main(): Promise<void> {
                     throw new Error("file:// URL 应被 scheme 校验拒绝");
                 }
                 console.log("✓ /image-recognition/mcp: 非 http(s) URL 按 isError 语义拒绝");
+            } finally {
+                await client.close();
+            }
+        }
+        // ---- web：动态 tool server（协议与校验语义） ----
+        {
+            const { client, transport } = await connect(new URL("/web/mcp", gateway.url).href);
+            try {
+                if (transport.sessionId !== undefined) throw new Error("0728 不应返回 session id");
+                const tools = await client.listTools();
+                const names = new Set(tools.tools?.map((tool) => tool.name) ?? []);
+                if (!names.has("web_search") || !names.has("web_fetch")) {
+                    throw new Error(`web 应暴露 web_search 与 web_fetch，得到：${[...names].join(", ")}`);
+                }
+                console.log("✓ /web/mcp: 0728，web_search 与 web_fetch 可见");
+
+                const rejected = await client.callTool({
+                    name: "web_fetch",
+                    arguments: { url: "file:///etc/passwd" },
+                });
+                if (!rejected.isError || !JSON.stringify(rejected.content).includes("拒绝访问")) {
+                    throw new Error("file:// URL 应被 scheme 校验拒绝");
+                }
+                console.log("✓ /web/mcp: 非 http(s) URL 按 isError 语义拒绝");
             } finally {
                 await client.close();
             }
@@ -265,6 +295,46 @@ async function main(): Promise<void> {
     } finally {
         await mockGateway.stop();
         imageServer.stop();
+    }
+
+    const mockWebGateway = await createGateway(
+        [
+            {
+                path: "/web/mcp",
+                createServer: createWebServer({
+                    provider: new MockWebProvider(),
+                    allowPrivateNetworks: true,
+                }),
+            },
+        ],
+        { host: "127.0.0.1", port: 0 },
+    );
+    try {
+        const { client, transport } = await connect(new URL("/web/mcp", mockWebGateway.url).href);
+        try {
+            if (transport.sessionId !== undefined) throw new Error("0728 不应返回 session id");
+            const search = await client.callTool({
+                name: "web_search",
+                arguments: { query: "cloudflare workers", max_results: 3, include_answer: true },
+            });
+            const searchText = (search.content[0] as { text?: string } | undefined)?.text ?? "";
+            if (search.isError || !searchText.includes("cloudflare workers") || !searchText.includes("https://example.com/mock")) {
+                throw new Error(`web_search Mock 应成功，得到：${searchText}`);
+            }
+            const fetchResult = await client.callTool({
+                name: "web_fetch",
+                arguments: { url: "https://example.com/page" },
+            });
+            const fetchText = (fetchResult.content[0] as { text?: string } | undefined)?.text ?? "";
+            if (fetchResult.isError || !fetchText.includes("[mock-fetch] https://example.com/page")) {
+                throw new Error(`web_fetch Mock 应成功，得到：${fetchText}`);
+            }
+            console.log("✓ /web/mcp: Mock 后端 search / fetch 成功路径正确");
+        } finally {
+            await client.close();
+        }
+    } finally {
+        await mockWebGateway.stop();
     }
     const routes = createMonorepoRoutes();
     const workerCatalogPage = await routes.fetch(new Request("http://localhost/"));

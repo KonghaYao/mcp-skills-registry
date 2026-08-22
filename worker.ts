@@ -5,7 +5,8 @@
  *   /                  Server Catalog HTML 页面。
  *   /catalog/mcp       只读 Server Catalog MCP endpoint。
  *   /openspec/mcp      独立 MCP endpoint。
- *   /mattpocock/mcp    独立 MCP endpoint。
+ *   /web/mcp           web_search / web_fetch。
+ *   /deep-research/mcp Deep Research skills。
  *
  * 部署：
  *   bunx wrangler dev        # 本地预览（http://127.0.0.1:8787）

@@ -39,6 +39,14 @@
       "path": ".",
       "select": ["*"],
       "dest": "servers/ip-as-logo/skills"
+    },
+    {
+      "id": "deep-research",
+      "repo": "Weizhena/Deep-Research-skills",
+      "ref": "master",
+      "path": "skills/research-en",
+      "select": ["*"],
+      "dest": "servers/deep-research/skills"
     }
   ]
 }

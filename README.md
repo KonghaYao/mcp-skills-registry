@@ -10,6 +10,8 @@
                     │                                             │
   /openspec/mcp   ──► OpenSpec skills sub server                  │
   /mattpocock/mcp ──► Matt Pocock skills sub server               │
+  /web/mcp        ──► web_search / web_fetch                      │
+  /deep-research/mcp ─► Deep Research skills                      │
   其他路径         ──► 404                                         │
                     └─────────────────────────────────────────────┘
 ```
@@ -47,13 +49,13 @@ bun run deploy              # 部署 Cloudflare Worker
 │   └── static-skills.ts         # 静态 skills resource 挂载器
 ├── servers/
 │   ├── openspec/
-│   │   ├── server.ts
-│   │   ├── skills/              # 生成、Git ignored
-│   │   └── skills.generated.ts  # 生成、Git ignored
-│   └── mattpocock/
-│       ├── server.ts
-│       ├── skills/              # 生成、Git ignored
-│       └── skills.generated.ts  # 生成、Git ignored
+│   ├── mattpocock/
+│   ├── dnr/
+│   ├── code-review-expert/
+│   ├── ip-as-logo/
+│   ├── deep-research/
+│   ├── image-recognition/
+│   └── web/
 ├── install-skills.js            # manifest + lock 同步器
 ├── generate-skills-registry.js  # 静态 registry 生成器
 ├── skills.json                  # source 声明

@@ -3,7 +3,9 @@ import { createOpenspecServer } from "../servers/openspec/server.ts";
 import { createDnrServer } from "../servers/dnr/server.ts";
 import { createCodeReviewExpertServer } from "../servers/code-review-expert/server.ts";
 import { createIpAsLogoServer } from "../servers/ip-as-logo/server.ts";
+import { createDeepResearchServer } from "../servers/deep-research/server.ts";
 import { imageRecognitionServer } from "../servers/image-recognition/server.ts";
+import { webServer } from "../servers/web/server.ts";
 
 /**
  * 聚合出口的唯一 sub server 注册表。
@@ -90,6 +92,34 @@ export const SERVER_REGISTRY = [
             description: "Vision analysis of images by URL: describe, OCR, and UI screenshot analysis.",
             version: "1.0.0",
             tags: ["vision", "image", "ocr"],
+            capabilities: ["tools"],
+            auth: { required: false },
+        },
+    },
+    {
+        id: "deep-research",
+        path: "/deep-research/mcp",
+        createServer: createDeepResearchServer,
+        catalog: {
+            id: "deep-research",
+            title: "Deep Research Skills",
+            description: "Structured deep research workflow skills from Weizhena/Deep-Research-skills (research-en).",
+            version: "1.0.0",
+            tags: ["research", "workflow"],
+            capabilities: ["resources", "skills"],
+            auth: { required: false },
+        },
+    },
+    {
+        id: "web",
+        path: "/web/mcp",
+        createServer: webServer,
+        catalog: {
+            id: "web",
+            title: "Web Search and Fetch",
+            description: "Public web search and URL fetch via a Tavily-compatible API.",
+            version: "1.0.0",
+            tags: ["web", "search", "fetch"],
             capabilities: ["tools"],
             auth: { required: false },
         },

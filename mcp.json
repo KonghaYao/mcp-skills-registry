@@ -12,6 +12,14 @@
     "image-recognition": {
       "type": "streamable-http",
       "url": "http://127.0.0.1:8787/image-recognition/mcp"
+    },
+    "web": {
+      "type": "streamable-http",
+      "url": "http://127.0.0.1:8787/web/mcp"
+    },
+    "deep-research": {
+      "type": "streamable-http",
+      "url": "http://127.0.0.1:8787/deep-research/mcp"
     }
   }
 }

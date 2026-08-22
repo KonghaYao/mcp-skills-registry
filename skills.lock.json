@@ -93,6 +93,18 @@
       "skills": [
         "ip-as-logo"
       ]
+    },
+    "deep-research": {
+      "ref": "master",
+      "commit": "e5479f857f484cde13fe69d2f3ce8de7af193bc7",
+      "dest": "servers/deep-research/skills",
+      "skills": [
+        "research",
+        "research-deep",
+        "research-add-fields",
+        "research-report",
+        "research-add-items"
+      ]
     }
   }
 }

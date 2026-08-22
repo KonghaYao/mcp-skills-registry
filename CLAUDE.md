@@ -2,7 +2,7 @@
 
 ## 项目定位
 
-`mcp-skills-registry`：演示 [MCPP 3.7] 的 monorepo 拓扑——**单一 HTTP 出口，路径路由到 sub server**（Cloudflare Worker / 本地端口 8787）。`openspec` 和 `mattpocock` sub server 分别把第三方 skills 通过 MCP 暴露给客户端。
+`mcp-skills-registry`：演示 [MCPP 3.7] 的 monorepo 拓扑——**单一 HTTP 出口，路径路由到 sub server**（Cloudflare Worker / 本地端口 8787）。静态 skills 与动态 tool（识图、web 搜索/读页）均经同一网关暴露。
 
 ## 目录结构
 
@@ -14,9 +14,13 @@ servers/openspec/skills/         OpenSpec skills（生成、Git ignored）
 servers/mattpocock/server.ts     Matt Pocock sub server
 servers/mattpocock/skills/       Matt Pocock skills（生成、Git ignored）
 servers/ip-as-logo/server.ts       IP as Logo sub server
+servers/deep-research/             Deep Research 工作流 skills（Weizhena research-en）
 servers/image-recognition/         图片识别 sub server（动态 tool，非 skills 投放）
 servers/image-recognition/vision-provider.ts   视觉后端抽象（VisionProvider 接口 + 模式契约）
 servers/image-recognition/providers/openai-compatible.ts  OpenAI 兼容后端（环境变量驱动）
+servers/web/                       公网搜索与读页（动态 tool：web_search / web_fetch）
+servers/web/web-provider.ts        WebProvider 抽象 + Mock
+servers/web/providers/tavily.ts    Tavily 兼容后端（默认 tavily.claude-code-best.win，key=public）
 servers/*/skills.generated.ts    Worker 可打包的静态 registry（生成、Git ignored，含 SKILL.md 与全部附件）
 skills.json                      skills 同步声明（手工维护）
 skills.lock.json                 skills 锁文件（自动生成、提交进 Git）
@@ -80,6 +84,27 @@ bun run skills:update       # 更新远程 commit、同步并重新生成 regist
 - 传输协议：OpenAI 图片协议——`POST {base}/chat/completions`，图片以 base64 data URI 经 `image_url` 传入，system prompt 按模式（英文，见 `openai-compatible.ts`）。
 - 测试：smoke 用 `MockVisionProvider`（离线可跑）+ `allowPrivateNetworks` 本地图片；真实后端需在部署环境配置环境变量。
 
+## web 子 server（动态 tool）
+
+公网搜索与读页，协议层只做校验，检索/抽取委托给 `WebProvider`。经 `/web/mcp` 暴露两个工具：
+
+- `web_search(query, search_depth?, max_results?, include_answer?)`：返回 title / url / snippet，可选短摘要。不要在 Worker 里二次抓结果页。
+- `web_fetch(url)`：公网 http(s) → 抽取正文；SSRF 拦截私网/localhost；正文截断 80_000 字符。
+
+默认上游是 Tavily 兼容口，**不需要真实 API key**：
+
+| 环境变量 | 默认 | 说明 |
+|---|---|---|
+| `TAVILY_API_BASE_URL` | `https://tavily.claude-code-best.win` | 兼容口，无尾斜杠 |
+| `TAVILY_API_KEY` | `public` | 占位 key，不是计费凭证 |
+| `TAVILY_API_TIMEOUT_MS` | `30000` | 单次上游超时 |
+
+鉴权走 `Authorization: Bearer <key>`。不要把 `api_key` 放进 JSON body（兼容口会 401）。动态内容不启用 Response Cache（`ttlMs: 0`）。smoke 用 `MockWebProvider`。
+
+## deep-research 子 server（静态 skills）
+
+来源 [Weizhena/Deep-Research-skills](https://github.com/Weizhena/Deep-Research-skills) 的 `skills/research-en`（约 2k stars）：`research` / `research-add-items` / `research-add-fields` / `research-deep` / `research-report`。客户端读 SKILL.md 后在本机执行；公网检索应配合 `/web/mcp`。
+
 ## 注意事项
 
 - Docker 镜像在 builder 阶段执行 `skills:build`，runtime 阶段不访问 GitHub；应用通过 `HOST=0.0.0.0` 暴露容器端口。
@@ -89,7 +114,7 @@ bun run skills:update       # 更新远程 commit、同步并重新生成 regist
 - `git ls-remote <url> <ref>` 是子串匹配，可能误命中 `refs/heads/<user>/main`；同步器已优先精确匹配 `refs/heads/<ref>` / `refs/tags/<ref>`。
 - 不使用 `npx skills`：它缺少本项目需要的 commit lock 和自定义 `dest`。
 - image-recognition 的 API key 等敏感配置只走环境变量 / Worker secrets，不写入任何源码、测试或文档示例。
-- 新增 sub server 时，同时添加 `skills.json` source、`servers/<id>/server.ts`、`src/registry.ts` 路由和 smoke 覆盖；动态 tool server 还需注入/默认构造 `VisionProvider`。
+- 新增 sub server 时，同时添加 `servers/<id>/server.ts`、`src/registry.ts` 路由和 smoke 覆盖；静态 skills 还要加 `skills.json` source；动态 tool server 再注入/默认构造 Provider。
 
 ## 约定
 
