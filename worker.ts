@@ -6,6 +6,7 @@
  *   /catalog/mcp       只读 Server Catalog MCP endpoint。
  *   /openspec/mcp      独立 MCP endpoint。
  *   /web/mcp           web_search / web_fetch。
+ *   /image-generation/mcp generate_image（返回 URL）。
  *   /deep-research/mcp Deep Research skills。
  *
  * 部署：

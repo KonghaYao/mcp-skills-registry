@@ -11,6 +11,7 @@
   /openspec/mcp   ──► OpenSpec skills sub server                  │
   /mattpocock/mcp ──► Matt Pocock skills sub server               │
   /web/mcp        ──► web_search / web_fetch                      │
+  /image-generation/mcp ─► generate_image（返回 URL）              │
   /deep-research/mcp ─► Deep Research skills                      │
   其他路径         ──► 404                                         │
                     └─────────────────────────────────────────────┘
@@ -55,6 +56,7 @@ bun run deploy              # 部署 Cloudflare Worker
 │   ├── ip-as-logo/
 │   ├── deep-research/
 │   ├── image-recognition/
+│   ├── image-generation/
 │   └── web/
 ├── install-skills.js            # manifest + lock 同步器
 ├── generate-skills-registry.js  # 静态 registry 生成器

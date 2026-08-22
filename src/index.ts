@@ -10,6 +10,7 @@
  *   /ip-as-logo/mcp    → ip-as-logo 子 server（IP 生成头像 Logo 技能）
  *   /deep-research/mcp → deep-research 子 server（Deep Research 工作流 skills）
  *   /image-recognition/mcp → image-recognition 子 server（图片识别工具）
+ *   /image-generation/mcp → image-generation 子 server（文生图，返回 URL）
  *   /web/mcp           → web 子 server（web_search / web_fetch）
  *
  * 形态要点：

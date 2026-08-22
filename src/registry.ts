@@ -5,6 +5,7 @@ import { createCodeReviewExpertServer } from "../servers/code-review-expert/serv
 import { createIpAsLogoServer } from "../servers/ip-as-logo/server.ts";
 import { createDeepResearchServer } from "../servers/deep-research/server.ts";
 import { imageRecognitionServer } from "../servers/image-recognition/server.ts";
+import { imageGenerationServer } from "../servers/image-generation/server.ts";
 import { webServer } from "../servers/web/server.ts";
 
 /**
@@ -92,6 +93,20 @@ export const SERVER_REGISTRY = [
             description: "Vision analysis of images by URL: describe, OCR, and UI screenshot analysis.",
             version: "1.0.0",
             tags: ["vision", "image", "ocr"],
+            capabilities: ["tools"],
+            auth: { required: false },
+        },
+    },
+    {
+        id: "image-generation",
+        path: "/image-generation/mcp",
+        createServer: imageGenerationServer,
+        catalog: {
+            id: "image-generation",
+            title: "Image Generation",
+            description: "Text-to-image via an upstream API; returns a public image URL.",
+            version: "1.0.0",
+            tags: ["image", "generation", "vision"],
             capabilities: ["tools"],
             auth: { required: false },
         },

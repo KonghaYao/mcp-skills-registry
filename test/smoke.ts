@@ -9,6 +9,8 @@ import {
     createImageRecognitionServer,
 } from "../servers/image-recognition/server.ts";
 import { MockVisionProvider } from "../servers/image-recognition/vision-provider.ts";
+import { createImageGenerationServer } from "../servers/image-generation/server.ts";
+import { MockImageGenProvider } from "../servers/image-generation/image-gen-provider.ts";
 import { createWebServer } from "../servers/web/server.ts";
 import { MockWebProvider } from "../servers/web/web-provider.ts";
 
@@ -123,7 +125,7 @@ async function main(): Promise<void> {
             result?: { servers?: Array<{ id?: string }> };
         };
         const catalogIds = new Set(catalogBody.result?.servers?.map(({ id }) => id) ?? []);
-        if (!catalogResponse.ok || !catalogIds.has("openspec") || !catalogIds.has("mattpocock") || !catalogIds.has("dnr") || !catalogIds.has("code-review-expert") || !catalogIds.has("ip-as-logo") || !catalogIds.has("image-recognition") || !catalogIds.has("deep-research") || !catalogIds.has("web")) {
+        if (!catalogResponse.ok || !catalogIds.has("openspec") || !catalogIds.has("mattpocock") || !catalogIds.has("dnr") || !catalogIds.has("code-review-expert") || !catalogIds.has("ip-as-logo") || !catalogIds.has("image-recognition") || !catalogIds.has("image-generation") || !catalogIds.has("deep-research") || !catalogIds.has("web")) {
             throw new Error(`/catalog/mcp 未列出已挂载的 sub server`);
         }
         console.log("✓ /：Catalog HTML 与 /catalog/mcp 可访问");
@@ -188,6 +190,20 @@ async function main(): Promise<void> {
                     throw new Error("file:// URL 应被 scheme 校验拒绝");
                 }
                 console.log("✓ /image-recognition/mcp: 非 http(s) URL 按 isError 语义拒绝");
+            } finally {
+                await client.close();
+            }
+        }
+        // ---- image-generation：动态 tool server ----
+        {
+            const { client, transport } = await connect(new URL("/image-generation/mcp", gateway.url).href);
+            try {
+                if (transport.sessionId !== undefined) throw new Error("0728 不应返回 session id");
+                const tools = await client.listTools();
+                const generate = tools.tools?.find((tool) => tool.name === "generate_image");
+                const properties = (generate?.inputSchema as { properties?: Record<string, unknown> } | undefined)?.properties ?? {};
+                if (!("prompt" in properties)) throw new Error("generate_image 缺少参数 prompt");
+                console.log("✓ /image-generation/mcp: 0728，generate_image 工具可见（prompt/size）");
             } finally {
                 await client.close();
             }
@@ -295,6 +311,41 @@ async function main(): Promise<void> {
     } finally {
         await mockGateway.stop();
         imageServer.stop();
+    }
+
+    const mockImageGenGateway = await createGateway(
+        [
+            {
+                path: "/image-generation/mcp",
+                createServer: createImageGenerationServer({
+                    provider: new MockImageGenProvider(),
+                }),
+            },
+        ],
+        { host: "127.0.0.1", port: 0 },
+    );
+    try {
+        const { client, transport } = await connect(new URL("/image-generation/mcp", mockImageGenGateway.url).href);
+        try {
+            if (transport.sessionId !== undefined) throw new Error("0728 不应返回 session id");
+            const generated = await client.callTool({
+                name: "generate_image",
+                arguments: { prompt: "a red cube", size: "1024x1024" },
+            });
+            const text = (generated.content[0] as { text?: string } | undefined)?.text ?? "";
+            if (generated.isError || !text.includes("https://example.com/generated.png")) {
+                throw new Error(`generate_image Mock 应返回 URL，得到：${text}`);
+            }
+            const structured = generated.structuredContent as { urls?: string[] } | undefined;
+            if (!structured?.urls?.includes("https://example.com/generated.png?size=1024x1024")) {
+                throw new Error("generate_image 应在 structuredContent.urls 返回图片 URL");
+            }
+            console.log("✓ /image-generation/mcp: Mock 后端返回图片 URL");
+        } finally {
+            await client.close();
+        }
+    } finally {
+        await mockImageGenGateway.stop();
     }
 
     const mockWebGateway = await createGateway(

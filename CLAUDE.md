@@ -2,7 +2,7 @@
 
 ## 项目定位
 
-`mcp-skills-registry`：演示 [MCPP 3.7] 的 monorepo 拓扑——**单一 HTTP 出口，路径路由到 sub server**（Cloudflare Worker / 本地端口 8787）。静态 skills 与动态 tool（识图、web 搜索/读页）均经同一网关暴露。
+`mcp-skills-registry`：演示 [MCPP 3.7] 的 monorepo 拓扑——**单一 HTTP 出口，路径路由到 sub server**（Cloudflare Worker / 本地端口 8787）。静态 skills 与动态 tool（识图、生图、web 搜索/读页）均经同一网关暴露。
 
 ## 目录结构
 
@@ -18,6 +18,9 @@ servers/deep-research/             Deep Research 工作流 skills（Weizhena res
 servers/image-recognition/         图片识别 sub server（动态 tool，非 skills 投放）
 servers/image-recognition/vision-provider.ts   视觉后端抽象（VisionProvider 接口 + 模式契约）
 servers/image-recognition/providers/openai-compatible.ts  OpenAI 兼容后端（环境变量驱动）
+servers/image-generation/          文生图 sub server（动态 tool，返回 URL）
+servers/image-generation/image-gen-provider.ts  ImageGenProvider 抽象 + Mock
+servers/image-generation/providers/openai-compatible.ts  OpenAI 兼容 `/images/generations`
 servers/web/                       公网搜索与读页（动态 tool：web_search / web_fetch）
 servers/web/web-provider.ts        WebProvider 抽象 + Mock
 servers/web/providers/tavily.ts    Tavily 兼容后端（默认 tavily.claude-code-best.win，key=public）
@@ -83,6 +86,21 @@ bun run skills:update       # 更新远程 commit、同步并重新生成 regist
 
 - 传输协议：OpenAI 图片协议——`POST {base}/chat/completions`，图片以 base64 data URI 经 `image_url` 传入，system prompt 按模式（英文，见 `openai-compatible.ts`）。
 - 测试：smoke 用 `MockVisionProvider`（离线可跑）+ `allowPrivateNetworks` 本地图片；真实后端需在部署环境配置环境变量。
+
+## image-generation 子 server（动态 tool）
+
+文生图，协议层只转交 prompt；Worker **不下载、不转存图片**，只把上游返回的公网 URL 交给客户端。工具：`generate_image(prompt, size?)`，经 `/image-generation/mcp` 暴露。`size`：`1024x1024`（默认）/ `1792x1024` / `1024x1792`。主输出是 URL 文本，`structuredContent.urls` 为 URL 列表。
+
+后端：`POST {base}/images/generations`（OpenAI 兼容，`response_format=url`）。不接受 base64。密钥可与识图共用：
+
+| 环境变量 | 默认 | 说明 |
+|---|---|---|
+| `IMAGE_GEN_API_KEY` | 回退 `VISION_API_KEY` | 无则 Unconfigured |
+| `IMAGE_GEN_API_BASE_URL` | 回退 `VISION_API_BASE_URL`，再回退 `https://api.openai.com/v1` | 无尾斜杠 |
+| `IMAGE_GEN_MODEL` | `dall-e-3` | 生图模型名 |
+| `IMAGE_GEN_TIMEOUT_MS` | `120000` | 生图较慢 |
+
+动态内容不启用 Response Cache。smoke 用 `MockImageGenProvider`。
 
 ## web 子 server（动态 tool）
 
